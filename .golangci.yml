@@ -1,0 +1,8 @@
+linters:
+  enable:
+    - bodyclose
+    - asciicheck
+    - bidichk
+    - durationcheck
+    - errorlint
+    - goconst

@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"url-shorter/internal/config"
 )
 
 func main() {
 	http.HandleFunc("/create-url/", handler)
-	fmt.Println("Server started")
+	fmt.Println("server started")
 	config := config.NewEnvConfig()
 	fmt.Printf("%+v\n", config)
 
@@ -27,5 +28,10 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello, World!"))
+	data := []byte("Hello, World!")
+	n, err := w.Write(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Wrote %d bytes, expected %d\n", n, len(data))
 }
