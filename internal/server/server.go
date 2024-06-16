@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 	"url-shorter/internal/config"
+	"url-shorter/internal/models"
 	"url-shorter/internal/repository"
 	"url-shorter/pkg/log"
 )
@@ -40,7 +42,8 @@ func (s *LinkServer) Start() error {
 }
 
 func (s *LinkServer) startHTTPServer() error {
-	http.HandleFunc("POST /create-url/", handler)
+	http.HandleFunc("POST /create-url/", s.handler)
+	http.HandleFunc("GET /", s.handleRedirect)
 	config := config.NewEnvConfig()
 	s.logger.Debug("Config parameters: " + config.String())
 
@@ -76,12 +79,66 @@ func (s *LinkServer) startHTTPServer() error {
 	return server.Shutdown(ctx)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	logger := log.NewDefaultLogger(log.Info)
-	data := []byte("Hello, World!")
-	n, err := w.Write(data)
+type Request struct {
+	Url      string `json:"url"`
+	ShortUrl string `json:"short_url"`
+}
+
+type Response struct {
+	ShortUrl string `json:"short_url"`
+}
+
+// TODO: Check url format
+func (s *LinkServer) handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var req Request
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		logger.Error("writing response: " + err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	fmt.Printf("Wrote %d bytes, expected %d\n", n, len(data))
+
+	if req.Url == "" {
+		http.Error(w, "Url is required", http.StatusBadRequest)
+		return
+	}
+
+	if req.ShortUrl == "" {
+		http.Error(w, "ShortUrl is required", http.StatusBadRequest)
+		return
+	}
+
+	err = s.linkRepo.CreateLink(req.Url, req.ShortUrl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := Response{
+		ShortUrl: req.ShortUrl,
+	}
+	
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	short := r.URL.Path[len("/"):]
+
+	url, err := s.linkRepo.GetLink(short)
+	if err != nil {
+		if errors.Is(err, models.ErrLinkNotFound) {
+			http.Error(w, "Link not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }

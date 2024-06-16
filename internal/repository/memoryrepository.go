@@ -17,17 +17,17 @@ func NewMemoryLinksRepository() *MemoryLinksRepository {
 	}
 }
 
-func (r *MemoryLinksRepository) CreateLink(url, short string) (string, error) {
+func (r *MemoryLinksRepository) CreateLink(url, short string) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
 	_, ok := r.links[short]
 	if ok {
-		return "", models.ErrLinkAlreadyExists
+		return models.ErrLinkAlreadyExists
 	}
 
 	r.links[short] = url
-	return short, nil
+	return nil
 }
 
 func (r *MemoryLinksRepository) GetLink(short string) (string, error) {
