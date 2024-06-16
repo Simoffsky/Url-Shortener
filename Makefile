@@ -1,10 +1,10 @@
 .PHONY: run, build, test, lint
 
 run: build
-	./bin/bot
+	./bin/app
 
 build:
-	go build -o ./bin/bot cmd/bot/main.go 
+	go build -o ./bin/app cmd/server/main.go 
 
 test:
 	go test ./... -race

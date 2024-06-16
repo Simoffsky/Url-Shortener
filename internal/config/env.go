@@ -16,6 +16,7 @@ func NewEnvConfig() Config {
 	config := Config{
 		Port:        getEnv("PORT", "8080"),
 		HTTPTimeout: time.Duration(getEnvAsInt("HTTP_TIMEOUT", 10)) * time.Second,
+		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
 	}
 
 	return config
