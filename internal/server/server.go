@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,13 +12,14 @@ import (
 	"url-shorter/internal/config"
 	"url-shorter/internal/models"
 	"url-shorter/internal/repository"
+	"url-shorter/internal/services"
 	"url-shorter/pkg/log"
 )
 
 type LinkServer struct {
-	config   config.Config
-	linkRepo repository.LinksRepository
-	logger   log.Logger
+	config      config.Config
+	linkService services.LinkService
+	logger      log.Logger
 }
 
 func NewLinkServer(config config.Config) *LinkServer {
@@ -27,8 +29,11 @@ func NewLinkServer(config config.Config) *LinkServer {
 }
 
 func (s *LinkServer) configureServer() error {
-	s.linkRepo = repository.NewMemoryLinksRepository()
-	s.logger = log.NewDefaultLogger(log.LevelFromString(s.config.LoggerLevel))
+
+	s.linkService = services.NewDefaultLinkService(repository.NewMemoryLinksRepository())
+	s.logger = log.NewDefaultLogger(
+		log.LevelFromString(s.config.LoggerLevel),
+	).WithTimePrefix(time.DateTime)
 	return nil
 }
 
@@ -84,61 +89,55 @@ type Request struct {
 	ShortUrl string `json:"short_url"`
 }
 
-type Response struct {
-	ShortUrl string `json:"short_url"`
-}
-
-// TODO: Check url format
 func (s *LinkServer) handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var link models.Link
+
+	if err := json.NewDecoder(r.Body).Decode(&link); err != nil {
+		s.writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	if req.Url == "" {
-		http.Error(w, "Url is required", http.StatusBadRequest)
+	if err := s.linkService.CreateLink(link); err != nil {
+		if errors.Is(err, models.ErrLinkAlreadyExists) {
+			s.writeError(w, http.StatusBadRequest, err)
+		} else {
+			s.writeError(w, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
-	if req.ShortUrl == "" {
-		http.Error(w, "ShortUrl is required", http.StatusBadRequest)
-		return
-	}
-
-	err = s.linkRepo.CreateLink(req.Url, req.ShortUrl)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	resp := Response{
-		ShortUrl: req.ShortUrl,
-	}
-	
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 }
 
 func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	short := r.URL.Path[len("/"):]
+	short := removeTrailingSlash(r.URL.Path[len("/"):])
 
-	url, err := s.linkRepo.GetLink(short)
+	s.logger.Debug("Redirecting to: " + short)
+
+	url, err := s.linkService.GetLink(short)
 	if err != nil {
 		if errors.Is(err, models.ErrLinkNotFound) {
-			http.Error(w, "Link not found", http.StatusNotFound)
-			return
+			s.writeError(w, http.StatusNotFound, err)
+		} else {
+			s.writeError(w, http.StatusInternalServerError, err)
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	http.Redirect(w, r, url, http.StatusMovedPermanently)
+	http.Redirect(w, r, url.Url, http.StatusMovedPermanently)
+}
+
+func (s *LinkServer) writeError(w http.ResponseWriter, errCode int, err error) {
+	s.logger.Error(fmt.Sprintf("HTTP error(%d): %s", errCode, err.Error()))
+	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+func removeTrailingSlash(short string) string {
+	if short == "" {
+		return short
+	}
+	if short[len(short)-1] == '/' {
+		return short[:len(short)-1]
+	}
+	return short
 }

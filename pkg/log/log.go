@@ -40,25 +40,37 @@ func LevelFromString(level string) LoggerLevel {
 }
 
 type defaultLogger struct {
-	level  LoggerLevel
-	prefix string
+	level      LoggerLevel
+	prefix     string
+	timeLayout string
 }
 
 func NewDefaultLogger(level LoggerLevel) *defaultLogger {
 	return &defaultLogger{
-		level: level,
+		level:      level,
+		prefix:     "",
+		timeLayout: time.DateTime,
 	}
 }
 
 func (l *defaultLogger) WithPrefix(prefix string) *defaultLogger {
 	return &defaultLogger{
-		level:  l.level,
-		prefix: l.prefix + prefix,
+		level:      l.level,
+		prefix:     l.prefix + prefix,
+		timeLayout: time.DateTime,
 	}
 }
 
-func (l defaultLogger) WithTimePrefix() *defaultLogger {
-	return l.WithPrefix(time.Now().Local().Format("[2006-01-02 15:04:05]" + " "))
+func (l *defaultLogger) WithTimePrefix(timeLayout string) *defaultLogger {
+	return &defaultLogger{
+		level:      l.level,
+		prefix:     l.prefix,
+		timeLayout: timeLayout,
+	}
+}
+
+func (l *defaultLogger) logMessage(levelName, msg string) {
+	fmt.Printf("%s [%s] %s: %s\n", l.prefix, time.Now().Format(l.timeLayout), levelName, msg)
 }
 
 func (l *defaultLogger) SetLevel(level LoggerLevel) {
@@ -67,25 +79,25 @@ func (l *defaultLogger) SetLevel(level LoggerLevel) {
 
 func (l *defaultLogger) Info(msg string) {
 	if l.level <= Info {
-		println(l.prefix + "INFO: " + msg)
+		l.logMessage("INFO", msg)
 	}
 }
 
 func (l *defaultLogger) Debug(msg string) {
 	if l.level <= Debug {
-		println(l.prefix + "DEBUG: " + msg)
+		l.logMessage("DEBUG", msg)
 	}
-
 }
 
 func (l *defaultLogger) Warning(msg string) {
 	if l.level <= Warning {
-		println(l.prefix + "WARNING: " + msg)
+		l.logMessage("WARNING", msg)
+
 	}
 }
 
 func (l *defaultLogger) Error(msg string) {
 	if l.level <= Error {
-		println(l.prefix + "ERROR: " + msg)
+		l.logMessage("ERROR", msg)
 	}
 }

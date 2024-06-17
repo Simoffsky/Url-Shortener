@@ -1,6 +1,9 @@
 package repository
 
+import "url-shorter/internal/models"
+
 type LinksRepository interface {
-	CreateLink(url, short string) (error)
-	GetLink(short string) (string, error)
+	CreateLink(models.Link) error
+	GetLink(short string) (*models.Link, error)
+	RemoveLink(short string) error
 }
