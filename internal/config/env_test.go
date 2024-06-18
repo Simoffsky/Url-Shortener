@@ -12,10 +12,12 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Setenv("PORT", "5000")
 	os.Setenv("HTTP_TIMEOUT", "15")
 	os.Setenv("LOGGER_LEVEL", "DEBUG")
+	os.Setenv("QR_GRPC_PORT", "8081")
 	expected := Config{
-		Port:        "5000",
+		ServerPort:  "5000",
 		HTTPTimeout: 15 * time.Second,
 		LoggerLevel: "DEBUG",
+		QRGRPCPort:  "8081",
 	}
 
 	config := NewEnvConfig()
@@ -31,10 +33,12 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 	os.Unsetenv("PORT")
 	os.Unsetenv("HTTP_TIMEOUT")
 	os.Unsetenv("LOGGER_LEVEL")
+	os.Unsetenv("QR_GRPC_PORT")
 	expected := Config{
-		Port:        "8080",
+		ServerPort:  "8080",
 		HTTPTimeout: 10 * time.Second,
 		LoggerLevel: "DEBUG",
+		QRGRPCPort:  "8081",
 	}
 
 	config := NewEnvConfig()

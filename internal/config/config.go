@@ -6,11 +6,13 @@ import (
 )
 
 type Config struct {
-	Port        string
+	ServerPort  string
 	HTTPTimeout time.Duration
 	LoggerLevel string
+
+	QRGRPCPort string
 }
 
 func (c Config) String() string {
-	return fmt.Sprintf("Port: %s, HTTPTimeout: %s, LoggerLevel: %s", c.Port, c.HTTPTimeout, c.LoggerLevel)
+	return fmt.Sprintf("Port: %s, HTTPTimeout: %s, LoggerLevel: %s", c.ServerPort, c.HTTPTimeout, c.LoggerLevel)
 }

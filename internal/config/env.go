@@ -14,9 +14,10 @@ func NewEnvConfig() Config {
 		log.Println("WARNING:", err) // not returning error because we can work without .env file
 	}
 	config := Config{
-		Port:        getEnv("PORT", "8080"),
+		ServerPort:  getEnv("PORT", "8080"),
 		HTTPTimeout: time.Duration(getEnvAsInt("HTTP_TIMEOUT", 10)) * time.Second,
 		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
+		QRGRPCPort:  getEnv("QR_GRPC_PORT", "8081"),
 	}
 
 	return config

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package qr;
+
+option go_package = "url-shorter/pkg/proto/qr";
+
+service QRCodeService {
+  rpc GetQRCode(QRCodeRequest) returns (QRCodeResponse) {}
+}
+
+message QRCodeRequest {
+  string url = 1;
+}
+
+message QRCodeResponse {
+  bytes qr_code = 1;
+}
