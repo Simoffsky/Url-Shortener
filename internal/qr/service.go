@@ -1,48 +1,58 @@
 package qr
 
 import (
+	"fmt"
 	"net/url"
-	"sync"
+	"time"
 	"url-shorter/internal/models"
+	"url-shorter/internal/qr/cache"
+	"url-shorter/pkg/log"
 
-	repository "url-shorter/internal/repository/qr"
+	"github.com/skip2/go-qrcode"
 )
 
 // image has imgSize x imgSize pixels
 type QRService interface {
-	CreateQRCode(url string, imgSize int) ([]byte, error)
-	GetQRCode(url string) ([]byte, error)
-	DeleteQRCode(url string) error
+	GetQRCode(link string, size int) ([]byte, error)
 }
 
 type QRServiceDefault struct {
-	mx   *sync.RWMutex
-	repo repository.QrRepository
+	logger log.Logger
+	cache  cache.Cache
 }
 
-func NewDefaultQRService() *QRServiceDefault {
+func NewDefaultQRService(cache cache.Cache, logger log.Logger) *QRServiceDefault {
 	return &QRServiceDefault{
-		mx:   &sync.RWMutex{},
-		repo: repository.NewMemoryQrRepository(),
+		cache:  cache,
+		logger: logger,
 	}
 }
 
-func (s *QRServiceDefault) CreateQRCode(link string, imgSize int) ([]byte, error) {
+func (s *QRServiceDefault) GetQRCode(link string, imgSize int) ([]byte, error) {
 	_, err := url.ParseRequestURI(link)
 	if err != nil {
 		return nil, models.ErrWrongLinkFormat
 	}
-	qr, err := s.repo.CreateQRCode(link, imgSize)
+
+	cacheKey := fmt.Sprintf("%s:%d", link, imgSize)
+
+	cachedQR, err := s.cache.Get(cacheKey)
+	if err == nil {
+		s.logger.Debug("QR code found in cache")
+		return cachedQR, nil
+	}
+
+	s.logger.Debug("QR code not found in cache, generating new one")
+	rawPng, err := qrcode.Encode(link, qrcode.Medium, imgSize)
 	if err != nil {
 		return nil, err
 	}
-	return qr, nil
-}
 
-func (s *QRServiceDefault) GetQRCode(link string) ([]byte, error) {
-	return s.repo.GetQRCode(link)
-}
+	err = s.cache.Set(cacheKey, rawPng, 100*time.Hour)
+	if err != nil {
+		s.logger.Error("Failed to save QR code to cache")
+		return nil, err
+	}
 
-func (s *QRServiceDefault) DeleteQRCode(link string) error {
-	return s.repo.DeleteQRCode(link)
+	return rawPng, nil
 }

@@ -20,14 +20,12 @@ func (m *LinkServiceMock) RemoveLink(short string) error {
 	return args.Error(0)
 }
 
-
 func (m *LinkServiceMock) CreateLink(link models.Link) error {
 	args := m.Called(link)
 	return args.Error(0)
 }
 
-
-func (m *LinkServiceMock) GetQRCode(short string) ([]byte, error) {
-	args := m.Called(short)
+func (m *LinkServiceMock) GetQRCode(link string, size int) ([]byte, error) {
+	args := m.Called(link, size)
 	return args.Get(0).([]byte), args.Error(1)
 }

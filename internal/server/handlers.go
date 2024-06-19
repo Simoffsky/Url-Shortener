@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"url-shorter/internal/models"
 )
 
@@ -47,11 +48,20 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
-	short := removeTrailingSlash(r.URL.Path[len("/qr/"):])
 
-	s.logger.Debug("Getting QR code for: " + short)
+	link := getFullUrl(r)
 
-	qr, err := s.linkService.GetQRCode(short)
+	sizeQuery := r.URL.Query().Get("size")
+	size, err := strconv.Atoi(sizeQuery)
+
+	if err != nil {
+		s.logger.Error("Invalid size query parameter: " + sizeQuery)
+		size = 0 // 0 means default size
+	}
+
+	s.logger.Debug("Getting QR code for: " + link)
+
+	qr, err := s.linkService.GetQRCode(link, size)
 	if err != nil {
 		if errors.Is(err, models.ErrLinkNotFound) {
 			s.writeError(w, http.StatusNotFound, err)
@@ -80,6 +90,15 @@ type Request struct {
 	ShortUrl string `json:"short_url"`
 }
 
+func getFullUrl(r *http.Request) string {
+	var scheme string
+	if r.TLS == nil {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host + r.RequestURI
+}
 func removeTrailingSlash(short string) string {
 	if short == "" {
 		return short

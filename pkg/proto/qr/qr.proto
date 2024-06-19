@@ -10,6 +10,7 @@ service QRCodeService {
 
 message QRCodeRequest {
   string url = 1;
+  int32 size = 2;
 }
 
 message QRCodeResponse {

@@ -7,14 +7,15 @@ import (
 	"syscall"
 	"time"
 	"url-shorter/internal/config"
+	"url-shorter/internal/qr/cache"
 
 	"url-shorter/pkg/log"
 	pb "url-shorter/pkg/proto/qr"
 
+	"github.com/go-redis/redis"
 	"google.golang.org/grpc"
 )
 
-// TODO: logger
 type QRServer struct {
 	pb.UnimplementedQRCodeServiceServer
 	service QRService
@@ -23,7 +24,10 @@ type QRServer struct {
 }
 
 func NewQRServer(config config.Config) *QRServer {
-	return &QRServer{config: config}
+	return &QRServer{
+		config: config,
+		logger: log.NewDefaultLogger(log.LevelFromString(config.LoggerLevel)),
+	}
 }
 
 func (s *QRServer) Start() error {
@@ -59,7 +63,22 @@ func (s *QRServer) Start() error {
 }
 
 func (s *QRServer) configure() error {
-	s.service = NewDefaultQRService()
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     s.config.RedisAddr,
+		Password: "",
+		DB:       0,
+	})
+
+	err := redisClient.Ping().Err()
+
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info("Connected to Redis")
+
+	s.service = NewDefaultQRService(cache.NewRedisCache(redisClient), s.logger)
+
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel)).
 		WithTimePrefix(time.DateTime)

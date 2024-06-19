@@ -14,7 +14,7 @@ type LinkService interface {
 	GetLink(short string) (*models.Link, error)
 	RemoveLink(short string) error
 	CreateLink(models.Link) error
-	GetQRCode(short string) ([]byte, error)
+	GetQRCode(short string, imgSize int) ([]byte, error)
 }
 
 type DefaultLinkService struct {
@@ -54,14 +54,13 @@ func (s *DefaultLinkService) CreateLink(link models.Link) error {
 	return s.linksRepo.CreateLink(link)
 }
 
-func (s *DefaultLinkService) GetQRCode(short string) ([]byte, error) {
-
-	link, err := s.GetLink(short)
-	if err != nil {
-		return nil, err
+// zero size means default size(512x512)
+func (s *DefaultLinkService) GetQRCode(link string, imgSize int) ([]byte, error) {
+	if imgSize == 0 {
+		imgSize = 512
 	}
 
-	resp, err := s.qrClient.GetQRCode(context.Background(), &pb.QRCodeRequest{Url: link.Url})
+	resp, err := s.qrClient.GetQRCode(context.Background(), &pb.QRCodeRequest{Url: link, Size: int32(imgSize)})
 	if err != nil {
 		return nil, err
 	}

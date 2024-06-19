@@ -1,0 +1,17 @@
+version: '3'
+name: 'url-shorter'
+
+networks:
+  main:
+    driver: bridge
+
+services:
+  redis:
+    container_name: chat_redis
+    image: redis:6.2-alpine
+    restart: always
+    networks:
+      - main
+    ports:
+      - 6379:6379
+    

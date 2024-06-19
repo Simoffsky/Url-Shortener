@@ -10,9 +10,11 @@ type Config struct {
 	HTTPTimeout time.Duration
 	LoggerLevel string
 
+	RedisAddr  string
 	QRGRPCPort string
 }
 
 func (c Config) String() string {
+	
 	return fmt.Sprintf("Port: %s, HTTPTimeout: %s, LoggerLevel: %s", c.ServerPort, c.HTTPTimeout, c.LoggerLevel)
 }

@@ -18,6 +18,7 @@ func NewEnvConfig() Config {
 		HTTPTimeout: time.Duration(getEnvAsInt("HTTP_TIMEOUT", 10)) * time.Second,
 		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
 		QRGRPCPort:  getEnv("QR_GRPC_PORT", "8081"),
+		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
 	}
 
 	return config
