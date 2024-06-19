@@ -5,7 +5,7 @@ import (
 	"sync"
 	"url-shorter/internal/models"
 
-	"github.com/skip2/go-qrcode"
+	repository "url-shorter/internal/repository/qr"
 )
 
 // image has imgSize x imgSize pixels
@@ -16,53 +16,33 @@ type QRService interface {
 }
 
 type QRServiceDefault struct {
-	mx        *sync.RWMutex
-	QRStorage map[string][]byte
+	mx   *sync.RWMutex
+	repo repository.QrRepository
 }
 
 func NewDefaultQRService() *QRServiceDefault {
 	return &QRServiceDefault{
-		mx:        &sync.RWMutex{},
-		QRStorage: map[string][]byte{},
+		mx:   &sync.RWMutex{},
+		repo: repository.NewMemoryQrRepository(),
 	}
 }
 
-// returns raw png bytes of the QR code
-// TODO: move saving to repository
 func (s *QRServiceDefault) CreateQRCode(link string, imgSize int) ([]byte, error) {
 	_, err := url.ParseRequestURI(link)
 	if err != nil {
 		return nil, models.ErrWrongLinkFormat
 	}
-	rawPng, err := qrcode.Encode(link, qrcode.Medium, imgSize)
-
+	qr, err := s.repo.CreateQRCode(link, imgSize)
 	if err != nil {
 		return nil, err
 	}
-
-	s.mx.Lock()
-	defer s.mx.Unlock()
-	s.QRStorage[link] = rawPng
-	return rawPng, nil
+	return qr, nil
 }
 
 func (s *QRServiceDefault) GetQRCode(link string) ([]byte, error) {
-	s.mx.RLock()
-	defer s.mx.RUnlock()
-	if qr, ok := s.QRStorage[link]; ok {
-		return qr, nil
-	}
-
-	return nil, models.ErrLinkNotFound
+	return s.repo.GetQRCode(link)
 }
 
 func (s *QRServiceDefault) DeleteQRCode(link string) error {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-	if _, ok := s.QRStorage[link]; ok {
-		delete(s.QRStorage, link)
-		return nil
-	}
-
-	return models.ErrLinkNotFound
+	return s.repo.DeleteQRCode(link)
 }

@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"url-shorter/internal/models"
-	"url-shorter/internal/repository"
+	repository "url-shorter/internal/repository/links"
 	pb "url-shorter/pkg/proto/qr"
 
 	"google.golang.org/grpc"

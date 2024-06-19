@@ -1,12 +1,13 @@
 package qr
 
 import (
-	"context"
-	"errors"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 	"url-shorter/internal/config"
-	"url-shorter/internal/models"
+
 	"url-shorter/pkg/log"
 	pb "url-shorter/pkg/proto/qr"
 
@@ -36,11 +37,25 @@ func (s *QRServer) Start() error {
 	}
 
 	var opts []grpc.ServerOption
-
-	//TODO: graceful shutdown
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterQRCodeServiceServer(grpcServer, s)
-	return grpcServer.Serve(lis)
+
+	//Graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		s.logger.Info("Starting gRPC server on port " + s.config.QRGRPCPort)
+		if err := grpcServer.Serve(lis); err != nil {
+			s.logger.Error("failed to serve gRPC: %s" + err.Error())
+		}
+	}()
+
+	<-sigChan
+
+	grpcServer.GracefulStop()
+	s.logger.Info("Shutting down gRPC server gracefully")
+	return nil
 }
 
 func (s *QRServer) configure() error {
@@ -50,17 +65,4 @@ func (s *QRServer) configure() error {
 		WithTimePrefix(time.DateTime)
 
 	return nil
-}
-
-func (s *QRServer) GetQRCode(ctx context.Context, in *pb.QRCodeRequest) (*pb.QRCodeResponse, error) {
-	qr, err := s.service.GetQRCode(in.Url)
-	if errors.Is(err, models.ErrLinkNotFound) {
-		qr, err = s.service.CreateQRCode(in.Url, 256)
-		if err != nil {
-			return nil, err
-		}
-	} else if err != nil {
-		return nil, err
-	}
-	return &pb.QRCodeResponse{QrCode: qr}, nil
 }

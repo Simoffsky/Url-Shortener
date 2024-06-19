@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 	"url-shorter/internal/config"
-	"url-shorter/internal/repository"
+	repository "url-shorter/internal/repository/links"
 	"url-shorter/pkg/log"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
