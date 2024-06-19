@@ -4,6 +4,8 @@ import (
 	"time"
 	"url-shorter/internal/models"
 
+	"errors"
+
 	"github.com/go-redis/redis"
 )
 
@@ -19,7 +21,7 @@ func NewRedisCache(redisClient *redis.Client) *RedisCache {
 
 func (c *RedisCache) Get(key string) ([]byte, error) {
 	bytes, err := c.redisClient.Get(key).Bytes()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, models.ErrCacheMiss
 	}
 	if err != nil {
