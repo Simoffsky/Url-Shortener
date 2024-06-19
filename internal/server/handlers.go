@@ -68,8 +68,11 @@ func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) writeError(w http.ResponseWriter, errCode int, err error) {
+	if err == nil {
+		err = errors.New("(WARNING)!: writeError() called with nil error")
+	}
 	s.logger.Error(fmt.Sprintf("HTTP error(%d): %s", errCode, err.Error()))
-	http.Error(w, err.Error(), http.StatusInternalServerError)
+	http.Error(w, err.Error(), errCode)
 }
 
 type Request struct {

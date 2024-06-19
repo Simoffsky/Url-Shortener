@@ -8,7 +8,6 @@ import (
 	"time"
 	"url-shorter/internal/config"
 	"url-shorter/internal/repository"
-	"url-shorter/internal/services"
 	"url-shorter/pkg/log"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,7 +15,7 @@ import (
 
 type LinkServer struct {
 	config      config.Config
-	linkService services.LinkService
+	linkService LinkService
 	logger      log.Logger
 }
 
@@ -28,7 +27,7 @@ func NewLinkServer(config config.Config) *LinkServer {
 
 func (s *LinkServer) configureServer() error {
 	var err error
-	s.linkService, err = services.NewDefaultLinkService(repository.NewMemoryLinksRepository(), ":"+s.config.QRGRPCPort)
+	s.linkService, err = NewDefaultLinkService(repository.NewMemoryLinksRepository(), ":"+s.config.QRGRPCPort)
 	if err != nil {
 		return err
 	}
@@ -56,14 +55,13 @@ func (s *LinkServer) startHTTPServer() error {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/qr/", s.handleQRCode)
 
-	config := config.NewEnvConfig()
-	s.logger.Debug("Config parameters: " + config.String())
+	s.logger.Debug("Config parameters: " + s.config.String())
 
 	server := &http.Server{
-		Addr:           ":" + config.ServerPort,
+		Addr:           ":" + s.config.ServerPort,
 		Handler:        mux,
-		ReadTimeout:    config.HTTPTimeout,
-		WriteTimeout:   config.HTTPTimeout,
+		ReadTimeout:    s.config.HTTPTimeout,
+		WriteTimeout:   s.config.HTTPTimeout,
 		MaxHeaderBytes: 1 << 20,
 	}
 
