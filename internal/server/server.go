@@ -55,8 +55,9 @@ func (s *LinkServer) Start() error {
 func (s *LinkServer) startHTTPServer() error {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/create-url/", s.handler)
-	mux.Handle("/", WithMetrics(http.HandlerFunc(s.handleRedirect)))
+	mux.HandleFunc("/create-url/", s.handleCreateLink)
+	mux.Handle("/{short}/", WithMetrics(http.HandlerFunc(s.handleRedirect)))
+	mux.Handle("/{short}", WithMetrics(http.HandlerFunc(s.handleRedirect)))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/qr/", s.handleQRCode)
 

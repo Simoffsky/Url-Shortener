@@ -66,7 +66,7 @@ func TestHandler_CreateLink(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/create", body)
 			w := httptest.NewRecorder()
 
-			linkServer.handler(w, req)
+			linkServer.handleCreateLink(w, req)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			mockLinkService.AssertExpectations(t)

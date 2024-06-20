@@ -9,7 +9,7 @@ import (
 	"url-shorter/internal/models"
 )
 
-func (s *LinkServer) handler(w http.ResponseWriter, r *http.Request) {
+func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 	var link models.Link
 
 	if err := json.NewDecoder(r.Body).Decode(&link); err != nil {
@@ -29,9 +29,26 @@ func (s *LinkServer) handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
-	short := removeTrailingSlash(r.URL.Path[len("/"):])
+func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
+	short := removeTrailingSlash(r.URL.Path[len("/remove/"):])
 
+	s.logger.Debug("Removing link: " + short)
+
+	if err := s.linkService.RemoveLink(short); err != nil {
+		if errors.Is(err, models.ErrLinkNotFound) {
+			s.writeError(w, http.StatusNotFound, err)
+		} else {
+			s.writeError(w, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
+	short := removeTrailingSlash(r.PathValue("short"))
+	
 	s.logger.Debug("Redirecting to: " + short)
 
 	url, err := s.linkService.GetLink(short)
@@ -48,26 +65,24 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
-
+	var qrSize int
+	var err error
 	link := getFullUrl(r)
-
 	sizeQuery := r.URL.Query().Get("size")
-	size, err := strconv.Atoi(sizeQuery)
 
-	if err != nil {
-		s.logger.Error("Invalid size query parameter: " + sizeQuery)
-		size = 0 // 0 means default size
+	if sizeQuery != "" {
+		qrSize, err = strconv.Atoi(sizeQuery)
+		if err != nil {
+			s.logger.Error("Invalid size query parameter: " + sizeQuery)
+			qrSize = 0
+		}
 	}
 
 	s.logger.Debug("Getting QR code for: " + link)
 
-	qr, err := s.linkService.GetQRCode(link, size)
+	qr, err := s.linkService.GetQRCode(link, qrSize)
 	if err != nil {
-		if errors.Is(err, models.ErrLinkNotFound) {
-			s.writeError(w, http.StatusNotFound, err)
-		} else {
-			s.writeError(w, http.StatusInternalServerError, err)
-		}
+		s.writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -85,11 +100,6 @@ func (s *LinkServer) writeError(w http.ResponseWriter, errCode int, err error) {
 	http.Error(w, err.Error(), errCode)
 }
 
-type Request struct {
-	Url      string `json:"url"`
-	ShortUrl string `json:"short_url"`
-}
-
 func getFullUrl(r *http.Request) string {
 	var scheme string
 	if r.TLS == nil {
@@ -99,6 +109,7 @@ func getFullUrl(r *http.Request) string {
 	}
 	return scheme + "://" + r.Host + r.RequestURI
 }
+
 func removeTrailingSlash(short string) string {
 	if short == "" {
 		return short
