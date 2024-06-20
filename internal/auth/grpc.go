@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	pb "url-shorter/pkg/proto/auth"
 )
 
@@ -10,6 +11,7 @@ func (s *AuthServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Registered! Senging response")
 	return &pb.RegisterResponse{}, nil
 }
 

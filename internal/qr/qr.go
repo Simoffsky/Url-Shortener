@@ -57,8 +57,20 @@ func (s *QRServer) Start() error {
 
 	<-sigChan
 
-	grpcServer.GracefulStop()
 	s.logger.Info("Shutting down gRPC server gracefully")
+	stopCh := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(stopCh)
+	}()
+
+	select {
+	case <-time.After(5 * time.Second):
+		grpcServer.Stop()
+		s.logger.Info("gRPC server stopped by timeout")
+	case <-stopCh:
+		s.logger.Info("gRPC server stopped gracefully")
+	}
 	return nil
 }
 

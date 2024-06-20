@@ -29,8 +29,7 @@ func (r *UserRepositoryMemory) CreateUser(user *models.User) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
-	exists, _ := r.Exists(user.Login)
-	if exists {
+	if _, ok := r.users[user.Login]; ok {
 		return models.ErrUserExists
 	}
 

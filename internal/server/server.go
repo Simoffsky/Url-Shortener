@@ -66,6 +66,9 @@ func (s *LinkServer) startHTTPServer() error {
 	mux.Handle("/{short}", WithMetrics(http.HandlerFunc(s.handleLink)))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/qr/", s.handleQRCode)
+	
+	mux.HandleFunc("/login/", s.handleLogin)
+	mux.HandleFunc("/register/", s.handleRegister)
 
 	s.logger.Debug("Config parameters: " + s.config.String())
 

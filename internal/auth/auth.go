@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 	"url-shorter/internal/config"
+	"url-shorter/internal/repository/auth"
 	"url-shorter/pkg/log"
 	pb "url-shorter/pkg/proto/auth"
 
@@ -55,8 +56,20 @@ func (s *AuthServer) Start() error {
 
 	<-sigChan
 
-	grpcServer.GracefulStop()
 	s.logger.Info("Shutting down gRPC server gracefully")
+	stopCh := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(stopCh)
+	}()
+
+	select {
+	case <-time.After(5 * time.Second):
+		grpcServer.Stop()
+		s.logger.Info("gRPC server stopped by timeout")
+	case <-stopCh:
+		s.logger.Info("gRPC server stopped")
+	}
 	return nil
 }
 
@@ -65,5 +78,8 @@ func (s *AuthServer) configure() error {
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel)).
 		WithTimePrefix(time.DateTime)
+
+	authRepo := auth.NewAuthRepositoryMemory()
+	s.service = NewDefaultAuthService(s.logger, authRepo, s.config.JwtSecret)
 	return nil
 }

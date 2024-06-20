@@ -112,6 +112,41 @@ func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *LinkServer) handleRegister(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		s.writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	s.logger.Debug("senging gRPC request with login: " + user.Login)
+	if err := s.authService.Register(user); err != nil {
+		s.handleError(w, err)
+		return
+	}
+	fmt.Println("Registered successfully")
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *LinkServer) handleLogin(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		s.writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	token, err := s.authService.Login(user)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Authorization", token)
+	w.WriteHeader(http.StatusOK)
+
+}
+
 func (s *LinkServer) handleError(w http.ResponseWriter, err error) {
 	var statusCode int
 	switch {
