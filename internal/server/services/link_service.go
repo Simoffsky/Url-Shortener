@@ -1,13 +1,16 @@
 package services
 
 import (
+	"fmt"
+	"time"
 	"url-shorter/internal/models"
 	repository "url-shorter/internal/repository/links"
 )
 
 type LinkService interface {
 	GetLink(short string) (*models.Link, error)
-	RemoveLink(short string) error
+	RemoveLink(userId int, short string) error
+	EditLink(userId int, short string, editedLink models.Link) error
 	CreateLink(models.Link) error
 	GetQRCode(short string, imgSize int) ([]byte, error)
 }
@@ -25,10 +28,28 @@ func NewDefaultLinkService(linksRepo repository.LinksRepository, qrRepo reposito
 }
 
 func (s *DefaultLinkService) GetLink(short string) (*models.Link, error) {
-	return s.linksRepo.GetLink(short)
+
+	link, err := s.linksRepo.GetLink(short)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(link)
+	if link.ExpiredAt != 0 && link.ExpiredAt < time.Now().Unix() {
+		return nil, models.ErrLinkExpired
+	}
+	return link, nil
 }
 
-func (s *DefaultLinkService) RemoveLink(short string) error {
+func (s *DefaultLinkService) RemoveLink(userId int, short string) error {
+
+	link, err := s.linksRepo.GetLink(short)
+	if err != nil {
+		return err
+	}
+
+	if link.CreatorId == 0 || link.CreatorId != userId {
+		return models.ErrForbidden
+	}
 	return s.linksRepo.RemoveLink(short)
 }
 
@@ -38,6 +59,22 @@ func (s *DefaultLinkService) CreateLink(link models.Link) error {
 	}
 
 	return s.linksRepo.CreateLink(link)
+}
+
+func (s *DefaultLinkService) EditLink(userId int, short string, editedLink models.Link) error {
+	if err := editedLink.Validate(); err != nil {
+		return err
+	}
+	link, err := s.GetLink(short)
+	if err != nil {
+		return err
+	}
+
+	if link.CreatorId == 0 || link.CreatorId != userId {
+		return models.ErrForbidden
+	}
+
+	return s.linksRepo.EditLink(short, editedLink)
 }
 
 // zero size means default size(512x512)

@@ -6,9 +6,10 @@ import (
 )
 
 type Link struct {
-	Url      string `json:"url"`
-	ShortUrl string `json:"short_url"`
-	TTL      int    `json:"ttl"`
+	Url       string `json:"url"`
+	ShortUrl  string `json:"short_url"`
+	ExpiredAt int64  `json:"expired_at"` // Unix timestamp
+	CreatorId int
 }
 
 func (l *Link) Validate() error {
@@ -26,7 +27,7 @@ func (l *Link) Validate() error {
 	if l.ShortUrl == "" {
 		textErr += "ShortUrl is empty;"
 	}
-	if l.TTL < 0 {
+	if l.ExpiredAt < 0 {
 		textErr += "TTL is negative;"
 	}
 	if textErr != "" {

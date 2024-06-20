@@ -48,3 +48,13 @@ func (r *MemoryLinksRepository) RemoveLink(short string) error {
 	delete(r.links, short)
 	return nil
 }
+
+func (r *MemoryLinksRepository) EditLink(short string, editedLink models.Link) error {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+	if _, ok := r.links[short]; !ok {
+		return fmt.Errorf("%w: %s", models.ErrLinkNotFound, short)
+	}
+	r.links[short] = editedLink
+	return nil
+}

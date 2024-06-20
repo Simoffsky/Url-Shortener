@@ -9,6 +9,16 @@ import (
 	"url-shorter/internal/models"
 )
 
+func (s *LinkServer) handleLink(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.handleRedirect(w, r)
+	case http.MethodDelete:
+		s.handleRemoveLink(w, r)
+	default:
+		s.writeError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
+	}
+}
 func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 	var link models.Link
 
@@ -18,11 +28,7 @@ func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.linkService.CreateLink(link); err != nil {
-		if errors.Is(err, models.ErrLinkAlreadyExists) {
-			s.writeError(w, http.StatusBadRequest, err)
-		} else {
-			s.writeError(w, http.StatusInternalServerError, err)
-		}
+		s.handleError(w, err)
 		return
 	}
 
@@ -34,12 +40,8 @@ func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
 
 	s.logger.Debug("Removing link: " + short)
 
-	if err := s.linkService.RemoveLink(short); err != nil {
-		if errors.Is(err, models.ErrLinkNotFound) {
-			s.writeError(w, http.StatusNotFound, err)
-		} else {
-			s.writeError(w, http.StatusInternalServerError, err)
-		}
+	if err := s.linkService.RemoveLink(0, short); err != nil {
+		s.handleError(w, err)
 		return
 	}
 
@@ -53,11 +55,7 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 
 	url, err := s.linkService.GetLink(short)
 	if err != nil {
-		if errors.Is(err, models.ErrLinkNotFound) {
-			s.writeError(w, http.StatusNotFound, err)
-		} else {
-			s.writeError(w, http.StatusInternalServerError, err)
-		}
+		s.handleError(w, err)
 		return
 	}
 
@@ -82,22 +80,36 @@ func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
 
 	qr, err := s.linkService.GetQRCode(link, qrSize)
 	if err != nil {
-		s.writeError(w, http.StatusInternalServerError, err)
+		s.handleError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "image/png")
 	if _, err := w.Write(qr); err != nil {
-		s.writeError(w, http.StatusInternalServerError, err)
+		s.handleError(w, err)
 	}
 }
 
-func (s *LinkServer) writeError(w http.ResponseWriter, errCode int, err error) {
-	if err == nil {
-		err = errors.New("(WARNING)!: writeError() called with nil error")
+func (s *LinkServer) handleError(w http.ResponseWriter, err error) {
+	var statusCode int
+	switch {
+	case errors.Is(err, models.ErrLinkNotFound):
+		statusCode = http.StatusNotFound
+	case errors.Is(err, models.ErrForbidden):
+		statusCode = http.StatusForbidden
+	case errors.Is(err, models.ErrLinkAlreadyExists):
+		fallthrough
+	case errors.Is(err, models.ErrLinkExpired):
+		statusCode = http.StatusBadRequest
+	default:
+		statusCode = http.StatusInternalServerError
 	}
-	s.logger.Error(fmt.Sprintf("HTTP error(%d): %s", errCode, err.Error()))
-	http.Error(w, err.Error(), errCode)
+	s.writeError(w, statusCode, err)
+}
+
+func (s *LinkServer) writeError(w http.ResponseWriter, statusCode int, err error) {
+	s.logger.Error(fmt.Sprintf("HTTP error(%d): %s", statusCode, err.Error()))
+	http.Error(w, err.Error(), statusCode)
 }
 
 func getFullUrl(r *http.Request) string {

@@ -15,13 +15,18 @@ func (m *LinkServiceMock) GetLink(short string) (*models.Link, error) {
 	return args.Get(0).(*models.Link), args.Error(1)
 }
 
-func (m *LinkServiceMock) RemoveLink(short string) error {
-	args := m.Called(short)
+func (m *LinkServiceMock) RemoveLink(userId int, short string) error {
+	args := m.Called(userId, short)
 	return args.Error(0)
 }
 
 func (m *LinkServiceMock) CreateLink(link models.Link) error {
 	args := m.Called(link)
+	return args.Error(0)
+}
+
+func (m *LinkServiceMock) EditLink(userId int, short string, editedLink models.Link) error {
+	args := m.Called(userId, short, editedLink)
 	return args.Error(0)
 }
 
