@@ -8,6 +8,7 @@ import (
 	"time"
 	"url-shorter/internal/config"
 	repository "url-shorter/internal/repository/links"
+	"url-shorter/internal/server/services"
 	"url-shorter/pkg/log"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -15,7 +16,7 @@ import (
 
 type LinkServer struct {
 	config      config.Config
-	linkService LinkService
+	linkService services.LinkService
 	logger      log.Logger
 }
 
@@ -34,7 +35,7 @@ func (s *LinkServer) configureServer() error {
 		return err
 	}
 
-	s.linkService = NewDefaultLinkService(linksRepo, qrRepo)
+	s.linkService = services.NewDefaultLinkService(linksRepo, qrRepo)
 
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel),

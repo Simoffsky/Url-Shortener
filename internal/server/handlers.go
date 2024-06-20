@@ -48,7 +48,7 @@ func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
 
 func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	short := removeTrailingSlash(r.PathValue("short"))
-	
+
 	s.logger.Debug("Redirecting to: " + short)
 
 	url, err := s.linkService.GetLink(short)
