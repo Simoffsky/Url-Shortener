@@ -12,13 +12,14 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Setenv("PORT", "5000")
 	os.Setenv("HTTP_TIMEOUT", "15")
 	os.Setenv("LOGGER_LEVEL", "DEBUG")
-	os.Setenv("QR_GRPC_PORT", "8081")
+	os.Setenv("QR_ADDR", "localhost:50051")
 	os.Setenv("REDIS_ADDR", "localhost:6379")
+
 	expected := Config{
 		ServerPort:  "5000",
 		HTTPTimeout: 15 * time.Second,
 		LoggerLevel: "DEBUG",
-		QRGRPCPort:  "8081",
+		QrAddr:      "localhost:50051",
 		RedisAddr:   "localhost:6379",
 	}
 
@@ -29,7 +30,7 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Unsetenv("PORT")
 	os.Unsetenv("HTTP_TIMEOUT")
 	os.Unsetenv("LOGGER_LEVEL")
-	os.Unsetenv("QR_GRPC_PORT")
+	os.Unsetenv("QR_ADDR")
 	os.Unsetenv("REDIS_ADDR")
 }
 
@@ -37,14 +38,14 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 	os.Unsetenv("PORT")
 	os.Unsetenv("HTTP_TIMEOUT")
 	os.Unsetenv("LOGGER_LEVEL")
-	os.Unsetenv("QR_GRPC_PORT")
+	os.Unsetenv("QR_ADDR")
 	os.Unsetenv("REDIS_ADDR")
 
 	expected := Config{
 		ServerPort:  "8080",
 		HTTPTimeout: 10 * time.Second,
 		LoggerLevel: "DEBUG",
-		QRGRPCPort:  "8081",
+		QrAddr:      "localhost:50051",
 		RedisAddr:   "localhost:6379",
 	}
 

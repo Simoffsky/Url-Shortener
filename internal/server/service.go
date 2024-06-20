@@ -1,13 +1,8 @@
 package server
 
 import (
-	"context"
 	"url-shorter/internal/models"
 	repository "url-shorter/internal/repository/links"
-	pb "url-shorter/pkg/proto/qr"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type LinkService interface {
@@ -18,24 +13,15 @@ type LinkService interface {
 }
 
 type DefaultLinkService struct {
-	qrClient  pb.QRCodeServiceClient
-	linksRepo repository.LinksRepository
+	qrRepository repository.QrRepository
+	linksRepo    repository.LinksRepository
 }
 
-func NewDefaultLinkService(linksRepo repository.LinksRepository, qrAddr string) (*DefaultLinkService, error) {
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	conn, err := grpc.NewClient(qrAddr, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	client := pb.NewQRCodeServiceClient(conn)
-
+func NewDefaultLinkService(linksRepo repository.LinksRepository, qrRepo repository.QrRepository) *DefaultLinkService {
 	return &DefaultLinkService{
-		qrClient:  client,
-		linksRepo: linksRepo,
-	}, nil
-
+		qrRepository: qrRepo,
+		linksRepo:    linksRepo,
+	}
 }
 
 func (s *DefaultLinkService) GetLink(short string) (*models.Link, error) {
@@ -60,9 +46,9 @@ func (s *DefaultLinkService) GetQRCode(link string, imgSize int) ([]byte, error)
 		imgSize = 512
 	}
 
-	resp, err := s.qrClient.GetQRCode(context.Background(), &pb.QRCodeRequest{Url: link, Size: int32(imgSize)})
+	qr, err := s.qrRepository.GetQRCode(link, imgSize)
 	if err != nil {
 		return nil, err
 	}
-	return resp.QrCode, nil
+	return qr, nil
 }

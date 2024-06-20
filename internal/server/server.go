@@ -27,10 +27,15 @@ func NewLinkServer(config config.Config) *LinkServer {
 
 func (s *LinkServer) configureServer() error {
 	var err error
-	s.linkService, err = NewDefaultLinkService(repository.NewMemoryLinksRepository(), ":"+s.config.QRGRPCPort)
+
+	linksRepo := repository.NewMemoryLinksRepository()
+	qrRepo, err := repository.NewQrGRPCRepository(s.config.QrAddr)
 	if err != nil {
 		return err
 	}
+
+	s.linkService = NewDefaultLinkService(linksRepo, qrRepo)
+
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel),
 	).WithTimePrefix(time.DateTime)

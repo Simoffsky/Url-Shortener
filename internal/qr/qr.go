@@ -35,7 +35,7 @@ func (s *QRServer) Start() error {
 		return err
 	}
 
-	lis, err := net.Listen("tcp", ":"+s.config.QRGRPCPort)
+	lis, err := net.Listen("tcp", s.config.QrAddr)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (s *QRServer) Start() error {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		s.logger.Info("Starting gRPC server on port " + s.config.QRGRPCPort)
+		s.logger.Info("Starting gRPC server on address: " + s.config.QrAddr)
 		if err := grpcServer.Serve(lis); err != nil {
 			s.logger.Error("failed to serve gRPC: %s" + err.Error())
 		}

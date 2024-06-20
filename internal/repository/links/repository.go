@@ -7,3 +7,7 @@ type LinksRepository interface {
 	GetLink(short string) (*models.Link, error)
 	RemoveLink(short string) error
 }
+
+type QrRepository interface {
+	GetQRCode(link string, imgSize int) ([]byte, error)
+}
