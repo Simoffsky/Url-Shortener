@@ -10,11 +10,14 @@ import (
 )
 
 func (s *LinkServer) handleLink(w http.ResponseWriter, r *http.Request) {
+	r.URL.Path = removeTrailingSlash(r.PathValue("short"))
 	switch r.Method {
 	case http.MethodGet:
 		s.handleRedirect(w, r)
 	case http.MethodDelete:
 		s.handleRemoveLink(w, r)
+	case http.MethodPut:
+		s.handleEditLink(w, r)
 	default:
 		s.writeError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
 	}
@@ -36,7 +39,7 @@ func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
-	short := removeTrailingSlash(r.URL.Path[len("/remove/"):])
+	short := r.URL.Path
 
 	s.logger.Debug("Removing link: " + short)
 
@@ -48,9 +51,28 @@ func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
-	short := removeTrailingSlash(r.PathValue("short"))
+func (s *LinkServer) handleEditLink(w http.ResponseWriter, r *http.Request) {
+	short := r.URL.Path
 
+	var link models.Link
+	if err := json.NewDecoder(r.Body).Decode(&link); err != nil {
+		s.writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	s.logger.Debug("Editing link: " + short)
+
+	//FIXME: userId is hardcoded to 0
+	if err := s.linkService.EditLink(0, short, link); err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
+	short := r.URL.Path
 	s.logger.Debug("Redirecting to: " + short)
 
 	url, err := s.linkService.GetLink(short)

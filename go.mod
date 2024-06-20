@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e

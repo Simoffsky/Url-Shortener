@@ -19,6 +19,8 @@ func NewEnvConfig() Config {
 		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
 		QrAddr:      getEnv("QR_ADDR", "localhost:50051"),
 		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
+		AuthAddr:    getEnv("AUTH_ADDR", "localhost:50052"),
+		JwtSecret:   getEnv("JWT_SECRET", "secret"),
 	}
 
 	return config

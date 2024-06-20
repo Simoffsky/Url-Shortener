@@ -14,13 +14,16 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Setenv("LOGGER_LEVEL", "DEBUG")
 	os.Setenv("QR_ADDR", "localhost:50051")
 	os.Setenv("REDIS_ADDR", "localhost:6379")
-
+	os.Setenv("AUTH_ADDR", "localhost:50052")
+	os.Setenv("JWT_SECRET", "secret")
 	expected := Config{
 		ServerPort:  "5000",
 		HTTPTimeout: 15 * time.Second,
 		LoggerLevel: "DEBUG",
 		QrAddr:      "localhost:50051",
 		RedisAddr:   "localhost:6379",
+		AuthAddr:    "localhost:50052",
+		JwtSecret:   "secret",
 	}
 
 	config := NewEnvConfig()
@@ -32,6 +35,8 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Unsetenv("LOGGER_LEVEL")
 	os.Unsetenv("QR_ADDR")
 	os.Unsetenv("REDIS_ADDR")
+	os.Unsetenv("AUTH_ADDR")
+	os.Unsetenv("JWT_SECRET")
 }
 
 func TestNewEnvConfigWithDefaults(t *testing.T) {
@@ -40,6 +45,8 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 	os.Unsetenv("LOGGER_LEVEL")
 	os.Unsetenv("QR_ADDR")
 	os.Unsetenv("REDIS_ADDR")
+	os.Unsetenv("AUTH_ADDR")
+	os.Unsetenv("JWT_SECRET")
 
 	expected := Config{
 		ServerPort:  "8080",
@@ -47,6 +54,8 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 		LoggerLevel: "DEBUG",
 		QrAddr:      "localhost:50051",
 		RedisAddr:   "localhost:6379",
+		AuthAddr:    "localhost:50052",
+		JwtSecret:   "secret",
 	}
 
 	config := NewEnvConfig()

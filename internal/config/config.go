@@ -12,6 +12,9 @@ type Config struct {
 
 	RedisAddr string
 	QrAddr    string
+
+	AuthAddr  string
+	JwtSecret string
 }
 
 func (c Config) String() string {

@@ -17,6 +17,7 @@ import (
 type LinkServer struct {
 	config      config.Config
 	linkService services.LinkService
+	authService services.AuthService
 	logger      log.Logger
 }
 
@@ -36,7 +37,11 @@ func (s *LinkServer) configureServer() error {
 	}
 
 	s.linkService = services.NewDefaultLinkService(linksRepo, qrRepo)
-
+	authService, err := services.NewAuthServiceGRPC(s.config.AuthAddr)
+	if err != nil {
+		return err
+	}
+	s.authService = authService
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel),
 	).WithTimePrefix(time.DateTime)
@@ -57,8 +62,8 @@ func (s *LinkServer) startHTTPServer() error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/create-url/", s.handleCreateLink)
-	mux.Handle("/{short}/", WithMetrics(http.HandlerFunc(s.handleRedirect)))
-	mux.Handle("/{short}", WithMetrics(http.HandlerFunc(s.handleRedirect)))
+	mux.Handle("/{short}/", WithMetrics(http.HandlerFunc(s.handleLink)))
+	mux.Handle("/{short}", WithMetrics(http.HandlerFunc(s.handleLink)))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/qr/", s.handleQRCode)
 
