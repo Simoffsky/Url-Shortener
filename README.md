@@ -3,12 +3,23 @@
 ```mermaid
 flowchart TB;
     Frontend -->|HTTP/REST| ShortenerService;
-    ShortenerService -->|gRPC| AuthService;
+
+    ShortenerService<-->ShortenerDB;
+    ShortenerService <-->|gRPC| AuthService;
     ShortenerService -->|Kafka| ClickTrackingService;
     ClickTrackingService -->|gRPC| ShortenerService;
+    
     ShortenerService -->|HTTP/REST| Frontend;
-    QRService -->|gRPC| ShortenerService;
-    ShortenerService -->|gRPC| QRService;
+    
+    ShortenerService <-->|gRPC| QRService;
+
+    QRService<-->Redis;
+    AuthService<-->AuthDB;
+
+    
+    class Redis,ShortenerDB,AuthDB database;
+    
+    classDef database fill:#f00,stroke:#333,stroke-width:4px;
 ```
 
 ## Описание сервисов
@@ -28,11 +39,6 @@ flowchart TB;
 Использует кэширование при помощи редиса через интерфейс `cache`.  
 Реализация по умолчанию - QRServiceDefault.
 
-TODO:
-
-- [x] Кэширование
-- [x] Более подробное логирование
-
 
 ### Shortener-Service
 
@@ -48,3 +54,12 @@ TODO:
 
 > make test
 
+## База данных
+
+Используемая CLI для миграций - [goose](https://github.com/pressly/goose).
+
+**Команда для миграций:**
+> cd migrate && goose postgres "user=postgres password=postgres port=5432 host=localhost dbname=url_shorter sslmode=disable" up
+
+**Подключение к бд через консоль:**
+> docker exec -it **container-name** psql -U postgres

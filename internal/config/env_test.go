@@ -16,6 +16,7 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Setenv("REDIS_ADDR", "localhost:6379")
 	os.Setenv("AUTH_ADDR", "localhost:50052")
 	os.Setenv("JWT_SECRET", "secret")
+	os.Setenv("DB_CONN", "host=localhost port=5432 user=postgres password=postgres dbname=url_shorter sslmode=disable")
 	expected := Config{
 		ServerPort:  "5000",
 		HTTPTimeout: 15 * time.Second,
@@ -24,6 +25,7 @@ func TestNewEnvConfig(t *testing.T) {
 		RedisAddr:   "localhost:6379",
 		AuthAddr:    "localhost:50052",
 		JwtSecret:   "secret",
+		DbConn:      "host=localhost port=5432 user=postgres password=postgres dbname=url_shorter sslmode=disable",
 	}
 
 	config := NewEnvConfig()
@@ -37,6 +39,7 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Unsetenv("REDIS_ADDR")
 	os.Unsetenv("AUTH_ADDR")
 	os.Unsetenv("JWT_SECRET")
+	os.Unsetenv("DB_CONN")
 }
 
 func TestNewEnvConfigWithDefaults(t *testing.T) {
@@ -47,6 +50,7 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 	os.Unsetenv("REDIS_ADDR")
 	os.Unsetenv("AUTH_ADDR")
 	os.Unsetenv("JWT_SECRET")
+	os.Unsetenv("DB_CONN")
 
 	expected := Config{
 		ServerPort:  "8080",
@@ -56,6 +60,7 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 		RedisAddr:   "localhost:6379",
 		AuthAddr:    "localhost:50052",
 		JwtSecret:   "secret",
+		DbConn:      "host=localhost port=5432 user=postgres password=postgres dbname=url_shorter sslmode=disable",
 	}
 
 	config := NewEnvConfig()

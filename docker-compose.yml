@@ -7,11 +7,26 @@ networks:
 
 services:
   redis:
-    container_name: chat_redis
+    container_name: redis
     image: redis:6.2-alpine
     restart: always
     networks:
       - main
     ports:
       - 6379:6379
+
+  postgres:
+    container_name: postgres
+    image: postgres:13-alpine
+    restart: always
+    networks:
+      - main
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: url_shorter
+
+  
     

@@ -75,11 +75,16 @@ func (s *AuthServer) Start() error {
 
 func (s *AuthServer) configure() error {
 
+	dbPool, err := auth.ConnectToDB(s.config.DbConn)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("Connected to DB - " + dbPool.Config().ConnConfig.Host + ":" + dbPool.Config().ConnConfig.Database)
+	authRepo := auth.NewPostgresUserRepository(dbPool)
 	s.logger = log.NewDefaultLogger(
 		log.LevelFromString(s.config.LoggerLevel)).
 		WithTimePrefix(time.DateTime)
 
-	authRepo := auth.NewAuthRepositoryMemory()
 	s.service = NewDefaultAuthService(s.logger, authRepo, s.config.JwtSecret)
 	return nil
 }

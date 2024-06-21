@@ -15,6 +15,8 @@ type Config struct {
 
 	AuthAddr  string
 	JwtSecret string
+
+	DbConn string
 }
 
 func (c Config) String() string {
