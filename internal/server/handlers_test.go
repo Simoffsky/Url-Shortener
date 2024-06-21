@@ -51,6 +51,22 @@ func TestHandler_CreateLink(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name:        "forbidden on invalid token",
+			requestBody: `{"url":"https://example.com","short":"exmpl"}`,
+			mockSetup: func(m *services.LinkServiceMock) {
+				m.On("CreateLink", mock.AnythingOfType("models.Link")).Return(models.ErrForbidden)
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:        "success with valid token",
+			requestBody: `{"url":"https://example.com","short":"exmpl"}`,
+			mockSetup: func(m *services.LinkServiceMock) {
+				m.On("CreateLink", mock.AnythingOfType("models.Link")).Return(nil)
+			},
+			expectedStatus: http.StatusCreated,
+		},
 	}
 
 	for _, tt := range tests {
