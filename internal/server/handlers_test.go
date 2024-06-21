@@ -41,7 +41,7 @@ func TestHandler_CreateLink(t *testing.T) {
 			mockSetup: func(m *services.LinkServiceMock) {
 				m.On("CreateLink", mock.AnythingOfType("models.Link")).Return(models.ErrLinkAlreadyExists)
 			},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusConflict,
 		},
 		{
 			name:        "internal server error on service failure",
