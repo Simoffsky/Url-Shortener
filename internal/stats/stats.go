@@ -77,5 +77,6 @@ func (s *StatsServer) configure() error {
 
 	s.service = NewStatsServiceDefault(statsRepo)
 	s.kafkaReader = NewKafkaReader(s.service, consumerManager, s.logger)
+	s.logger.Debug("Connected to kafka: " + s.config.KafkaBrokers[0])
 	return nil
 }

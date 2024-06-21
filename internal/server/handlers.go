@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"url-shorter/internal/jwt"
 	"url-shorter/internal/models"
 )
@@ -99,6 +100,21 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("Redirecting to: " + short)
 
 	url, err := s.linkService.GetLink(short)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	statsVisitor := &models.LinkStatVisitor{
+		LinkShort: short,
+		Visitor: models.LinkVisitor{
+			VisitorIP:    r.RemoteAddr,
+			VisitorAgent: r.UserAgent(),
+		},
+		TimeAt: time.Now().Unix(),
+	}
+
+	err = s.statService.SendStat(statsVisitor)
 	if err != nil {
 		s.handleError(w, err)
 		return

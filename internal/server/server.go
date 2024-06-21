@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 	"url-shorter/internal/config"
+	"url-shorter/internal/kafka"
 	repository "url-shorter/internal/repository/links"
 	"url-shorter/internal/server/services"
 	"url-shorter/pkg/log"
@@ -18,6 +19,7 @@ type LinkServer struct {
 	config      config.Config
 	linkService services.LinkService
 	authService services.AuthService
+	statService services.StatService
 	logger      log.Logger
 }
 
@@ -50,6 +52,16 @@ func (s *LinkServer) configureServer() error {
 		log.LevelFromString(s.config.LoggerLevel),
 	).WithTimePrefix(time.DateTime)
 
+	kafkaManager, err := kafka.NewProducerManager(s.config.KafkaBrokers, s.config.KafkaTopic, s.logger)
+	if err != nil {
+		return err
+	}
+	s.statService, err = services.NewStatServiceGRPC(s.config.StatsAddr, &kafkaManager)
+
+	kafkaManager.RunProducer(context.Background())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
