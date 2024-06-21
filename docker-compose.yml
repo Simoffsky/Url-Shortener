@@ -7,18 +7,62 @@ networks:
 
 services:
 
-  # shorter:
-  #   container_name: shorter
-  #   build:
-  #     context: .
-  #     dockerfile: docker/shorter/Dockerfile
-  #   restart: always
-  #   networks:
-  #     - main
-  #   ports:
-  #     - "${PORT}:${PORT}"
-  #   env_file:
-  #     - .env
+  shorter:
+    container_name: shorter
+    build:
+      context: .
+      dockerfile: docker/shorter/Dockerfile
+    restart: always
+    depends_on:
+      - kafka
+      - redis
+      - postgres
+      - auth
+      - qr
+      - stats
+    networks:
+      - main
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+
+  auth:
+    container_name: auth
+    build:
+      context: .
+      dockerfile: docker/auth/Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      - main
+    env_file:
+      - .env
+
+  qr:
+    container_name: qr
+    build:
+      context: .
+      dockerfile: docker/qr/Dockerfile
+    restart: always
+    networks:
+      - main
+    env_file:
+      - .env
+
+  stats:
+    container_name: stats
+    build:
+      context: .
+      dockerfile: docker/stats/Dockerfile
+    restart: always
+    depends_on:
+      - kafka
+    networks:
+      - main
+    env_file:
+      - .env
     
   redis:
     container_name: redis
