@@ -9,7 +9,13 @@ type Link struct {
 	Url          string `json:"url"`
 	ShortUrl     string `json:"short_url"`
 	ExpiredAt    int64  `json:"expired_at"` // Unix timestamp
-	CreatorLogin string
+	CreatorLogin string `json:"creator_login"`
+}
+
+type LinkVisitor struct {
+	LinkShort    string `json:"link_short"`
+	VisitorIP    string `json:"visitor_ip"`
+	VisitorAgent string `json:"visitor_agent"`
 }
 
 func (l *Link) Validate() error {

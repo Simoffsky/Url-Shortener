@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package stats;
+
+option go_package = "url-shorter/pkg/proto/qr";
+
+service StatService {
+    rpc GetStatForLink(LinkStatRequest) returns (LinkStatResponse);
+}
+
+message LinkStatRequest {
+  string short = 1; 
+}
+
+message LinkStatResponse {
+    string shortLink = 1; 
+    int32 clicks = 2; 
+    int64 lastAccessedAt = 3; 
+    int32 uniqueClicks = 4; 
+  }
