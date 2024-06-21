@@ -17,7 +17,7 @@ func NewEnvConfig() Config {
 		ServerPort:  getEnv("PORT", "8080"),
 		HTTPTimeout: time.Duration(getEnvAsInt("HTTP_TIMEOUT", 10)) * time.Second,
 		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
-		QrAddr:      getEnv("QR_ADDR", "localhost:50051"),
+		QrAddr:      getEnv("QR_GRPC_ADDR", "localhost:50051"),
 		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
 		AuthAddr:    getEnv("AUTH_GRPC_ADDR", "localhost:50052"),
 		JwtSecret:   getEnv("JWT_SECRET", "secret"),

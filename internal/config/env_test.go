@@ -12,7 +12,7 @@ func UnsetEnv() {
 	os.Unsetenv("PORT")
 	os.Unsetenv("HTTP_TIMEOUT")
 	os.Unsetenv("LOGGER_LEVEL")
-	os.Unsetenv("QR_ADDR")
+	os.Unsetenv("QR_GRPC_ADDR")
 	os.Unsetenv("REDIS_ADDR")
 	os.Unsetenv("AUTH_GRPC_ADDR")
 	os.Unsetenv("JWT_SECRET")
@@ -27,7 +27,7 @@ func TestNewEnvConfig(t *testing.T) {
 	os.Setenv("PORT", "5000")
 	os.Setenv("HTTP_TIMEOUT", "15")
 	os.Setenv("LOGGER_LEVEL", "DEBUG")
-	os.Setenv("QR_ADDR", "localhost:50051")
+	os.Setenv("QR_GRPC_ADDR", "localhost:50051")
 	os.Setenv("REDIS_ADDR", "localhost:6379")
 	os.Setenv("AUTH_GRPC_ADDR", "localhost:50052")
 	os.Setenv("JWT_SECRET", "secret")
@@ -77,7 +77,6 @@ func TestNewEnvConfigWithDefaults(t *testing.T) {
 		},
 		KafkaGroup: "url_shorter",
 		KafkaTopic: "stats",
-
 	}
 
 	config := NewEnvConfig()
