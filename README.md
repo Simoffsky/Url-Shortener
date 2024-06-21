@@ -16,7 +16,7 @@ cd migrate && goose postgres "user=postgres password=postgres port=5432 host=loc
 
 **Подключение к бд через консоль:**
 ```bash
-> docker exec -it **container-name** psql -U postgres
+> docker exec -it postgres psql -U postgres
 ```
 
 ### Запуск с использованием Docker Compose
