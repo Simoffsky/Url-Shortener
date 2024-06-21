@@ -6,10 +6,10 @@ import (
 )
 
 type Link struct {
-	Url       string `json:"url"`
-	ShortUrl  string `json:"short_url"`
-	ExpiredAt int64  `json:"expired_at"` // Unix timestamp
-	CreatorId int
+	Url          string `json:"url"`
+	ShortUrl     string `json:"short_url"`
+	ExpiredAt    int64  `json:"expired_at"` // Unix timestamp
+	CreatorLogin string
 }
 
 func (l *Link) Validate() error {

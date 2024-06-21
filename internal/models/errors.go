@@ -1,16 +1,38 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+)
+
+type Error struct {
+	Err        error
+	StatusCode int
+}
+
+func (e Error) Error() string {
+	return e.Err.Error()
+}
+
+func NewError(err error, statusCode int) Error {
+	return Error{
+		Err:        err,
+		StatusCode: statusCode,
+	}
+}
 
 var (
-	ErrLinkNotFound      = errors.New("link not found")
-	ErrLinkAlreadyExists = errors.New("link already exists")
-	ErrLinkExpired       = errors.New("link expired")
-	ErrWrongLinkFormat   = errors.New("wrong link format")
-	ErrCacheMiss         = errors.New("cache miss")
-	ErrForbidden         = errors.New("forbidden")
+	ErrLinkNotFound      = NewError(errors.New("link not found"), http.StatusNotFound)
+	ErrLinkAlreadyExists = NewError(errors.New("link already exists"), http.StatusConflict)
+	ErrLinkExpired       = NewError(errors.New("link expired"), http.StatusGone)
+	ErrWrongLinkFormat   = NewError(errors.New("wrong link format"), http.StatusBadRequest)
+	ErrCacheMiss         = NewError(errors.New("cache miss"), http.StatusNotFound)
+	ErrForbidden         = NewError(errors.New("forbidden"), http.StatusForbidden)
 
-	ErrUserExists      = errors.New("user already exists")
-	ErrUserNotFound    = errors.New("user not found")
-	ErrInvalidPassword = errors.New("invalid password")
+	ErrUserExists      = NewError(errors.New("user already exists"), http.StatusConflict)
+	ErrUserNotFound    = NewError(errors.New("user not found"), http.StatusNotFound)
+	ErrInvalidPassword = NewError(errors.New("invalid password"), http.StatusUnauthorized)
+
+	ErrTokenExpired = NewError(errors.New("token expired"), http.StatusUnauthorized)
+	ErrInvalidToken = NewError(errors.New("invalid token"), http.StatusUnauthorized)
 )

@@ -9,8 +9,8 @@ import (
 
 type LinkService interface {
 	GetLink(short string) (*models.Link, error)
-	RemoveLink(userId int, short string) error
-	EditLink(userId int, short string, editedLink models.Link) error
+	RemoveLink(creatorLogin string, short string) error
+	EditLink(creatorLogin string, short string, editedLink models.Link) error
 	CreateLink(models.Link) error
 	GetQRCode(short string, imgSize int) ([]byte, error)
 }
@@ -40,14 +40,14 @@ func (s *DefaultLinkService) GetLink(short string) (*models.Link, error) {
 	return link, nil
 }
 
-func (s *DefaultLinkService) RemoveLink(userId int, short string) error {
+func (s *DefaultLinkService) RemoveLink(creatorLogin string, short string) error {
 
 	link, err := s.linksRepo.GetLink(short)
 	if err != nil {
 		return err
 	}
 
-	if link.CreatorId == 0 || link.CreatorId != userId {
+	if link.CreatorLogin == "" || link.CreatorLogin != creatorLogin {
 		return models.ErrForbidden
 	}
 	return s.linksRepo.RemoveLink(short)
@@ -61,7 +61,7 @@ func (s *DefaultLinkService) CreateLink(link models.Link) error {
 	return s.linksRepo.CreateLink(link)
 }
 
-func (s *DefaultLinkService) EditLink(userId int, short string, editedLink models.Link) error {
+func (s *DefaultLinkService) EditLink(creatorLogin string, short string, editedLink models.Link) error {
 	if err := editedLink.Validate(); err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (s *DefaultLinkService) EditLink(userId int, short string, editedLink model
 		return err
 	}
 
-	if link.CreatorId == 0 || link.CreatorId != userId {
+	if link.CreatorLogin == "" || link.CreatorLogin != creatorLogin {
 		return models.ErrForbidden
 	}
 

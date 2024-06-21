@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"url-shorter/internal/jwt"
 	"url-shorter/internal/models"
 )
 
@@ -25,6 +26,16 @@ func (s *LinkServer) handleLink(w http.ResponseWriter, r *http.Request) {
 func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 	var link models.Link
 
+	token := r.Header.Get("Authorization")
+	if token != "" {
+		login, err := jwt.ParseJWT(token, s.config.JwtSecret)
+		if err != nil {
+			s.handleError(w, err)
+			return
+		}
+		link.CreatorLogin = login
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&link); err != nil {
 		s.writeError(w, http.StatusBadRequest, err)
 		return
@@ -41,9 +52,26 @@ func (s *LinkServer) handleCreateLink(w http.ResponseWriter, r *http.Request) {
 func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
 	short := r.URL.Path
 
+	creatorLogin, err := getUserLogin(r.Header.Get("Authorization"), s.config.JwtSecret)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	link, err := s.linkService.GetLink(short)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	if link.CreatorLogin != creatorLogin {
+		s.handleError(w, models.ErrForbidden)
+		return
+	}
+
 	s.logger.Debug("Removing link: " + short)
 
-	if err := s.linkService.RemoveLink(0, short); err != nil {
+	if err := s.linkService.RemoveLink(creatorLogin, short); err != nil {
 		s.handleError(w, err)
 		return
 	}
@@ -60,10 +88,16 @@ func (s *LinkServer) handleEditLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	creatorLogin, err := getUserLogin(r.Header.Get("Authorization"), s.config.JwtSecret)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+	link.CreatorLogin = creatorLogin
 	s.logger.Debug("Editing link: " + short)
 
 	//FIXME: userId is hardcoded to 0
-	if err := s.linkService.EditLink(0, short, link); err != nil {
+	if err := s.linkService.EditLink(creatorLogin, short, link); err != nil {
 		s.handleError(w, err)
 		return
 	}
@@ -148,20 +182,13 @@ func (s *LinkServer) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) handleError(w http.ResponseWriter, err error) {
-	var statusCode int
-	switch {
-	case errors.Is(err, models.ErrLinkNotFound):
-		statusCode = http.StatusNotFound
-	case errors.Is(err, models.ErrForbidden):
-		statusCode = http.StatusForbidden
-	case errors.Is(err, models.ErrLinkAlreadyExists):
-		fallthrough
-	case errors.Is(err, models.ErrLinkExpired):
-		statusCode = http.StatusBadRequest
-	default:
-		statusCode = http.StatusInternalServerError
+	fmt.Printf("%+v\n", err)
+	var modelErr models.Error
+	if !errors.As(err, &modelErr) {
+		s.writeError(w, http.StatusInternalServerError, err)
+		return
 	}
-	s.writeError(w, statusCode, err)
+	s.writeError(w, modelErr.StatusCode, err)
 }
 
 func (s *LinkServer) writeError(w http.ResponseWriter, statusCode int, err error) {
@@ -187,4 +214,15 @@ func removeTrailingSlash(short string) string {
 		return short[:len(short)-1]
 	}
 	return short
+}
+
+func getUserLogin(token, jwtSecret string) (string, error) {
+	if token == "" {
+		return "", nil
+	}
+	login, err := jwt.ParseJWT(token, jwtSecret)
+	if err != nil {
+		return "", err
+	}
+	return login, nil
 }

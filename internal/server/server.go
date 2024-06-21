@@ -37,7 +37,7 @@ func (s *LinkServer) configureServer() error {
 	}
 
 	s.linkService = services.NewDefaultLinkService(linksRepo, qrRepo)
-	authService, err := services.NewAuthServiceGRPC(s.config.AuthAddr)
+	authService, err := services.NewAuthServiceGRPC(s.config.AuthAddr, s.config.JwtSecret)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (s *LinkServer) startHTTPServer() error {
 	mux.Handle("/{short}", WithMetrics(http.HandlerFunc(s.handleLink)))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/qr/", s.handleQRCode)
-	
+
 	mux.HandleFunc("/login/", s.handleLogin)
 	mux.HandleFunc("/register/", s.handleRegister)
 
