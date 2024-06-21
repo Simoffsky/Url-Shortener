@@ -7,6 +7,6 @@ type StatService interface {
 	SendStat(stat *models.LinkStatVisitor) error
 }
 
-type StatServiceGRPC struct {
-	statsClient
-}
+// type StatServiceGRPC struct {
+// 	statsClient
+// }

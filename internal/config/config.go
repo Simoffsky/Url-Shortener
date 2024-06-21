@@ -17,6 +17,12 @@ type Config struct {
 	JwtSecret string
 
 	DbConn string
+
+	StatsAddr string
+
+	KafkaBrokers []string
+	KafkaGroup   string
+	KafkaTopic   string
 }
 
 func (c Config) String() string {

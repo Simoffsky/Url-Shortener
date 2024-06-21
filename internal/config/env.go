@@ -22,6 +22,11 @@ func NewEnvConfig() Config {
 		AuthAddr:    getEnv("AUTH_ADDR", "localhost:50052"),
 		JwtSecret:   getEnv("JWT_SECRET", "secret"),
 		DbConn:      getEnv("DB_CONN", "host=localhost port=5432 user=postgres password=postgres dbname=url_shorter sslmode=disable"),
+
+		StatsAddr:    getEnv("STATS_ADDR", "localhost:50053"),
+		KafkaBrokers: []string{getEnv("KAFKA_BROKERS", "localhost:9092")},
+		KafkaGroup:   getEnv("KAFKA_GROUP", "url_shorter"),
+		KafkaTopic:   getEnv("KAFKA_TOPIC", "stats"),
 	}
 
 	return config
