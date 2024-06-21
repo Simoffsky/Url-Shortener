@@ -5,6 +5,20 @@
 Настройка приложения осуществляется через переменные среды. 
 Для удобства начальной настройки вы можете скопировать содержимое файла `.env-example` в файл `.env`, который будет использоваться при запуске приложения.
 
+### База данных и миграции
+
+Используемая CLI для миграций - [goose](https://github.com/pressly/goose).
+
+**Команда для миграций:**
+```bash
+cd migrate && goose postgres "user=postgres password=postgres port=5432 host=localhost dbname=url_shorter sslmode=disable" up
+```
+
+**Подключение к бд через консоль:**
+```bash
+> docker exec -it **container-name** psql -U postgres
+```
+
 ### Запуск с использованием Docker Compose
 
 После настройки переменных среды в файле `.env`, вы можете запустить все необходимые сервисы с помощью Docker Compose. 
@@ -175,17 +189,6 @@ Proto файл сервиса: [`stats.proto`](pkg/proto/stats/stats.proto)
 
 **Основные компоненты**
 
-*QRServer:* Основной сервер, обрабатывающий gRPC запросы.  
-Использует QRService для выполнения операций с QR-кодами.
-
-*QRService:* Интерфейс, определяющий методы для работы с QR-кодами.  
-Использует кэширование при помощи редиса через интерфейс `cache`.  
-Реализация по умолчанию - QRServiceDefault.
-
-
-
-
-
 
 ## Тесты
 
@@ -194,16 +197,3 @@ Proto файл сервиса: [`stats.proto`](pkg/proto/stats/stats.proto)
 make test
 ```
 ---
-## База данных
-
-Используемая CLI для миграций - [goose](https://github.com/pressly/goose).
-
-**Команда для миграций:**
-```bash
-cd migrate && goose postgres "user=postgres password=postgres port=5432 host=localhost dbname=url_shorter sslmode=disable" up
-```
-
-**Подключение к бд через консоль:**
-```bash
-> docker exec -it **container-name** psql -U postgres
-```
