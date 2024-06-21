@@ -1,6 +1,7 @@
 package qr
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"time"
@@ -43,16 +44,32 @@ func (s *QRServiceDefault) GetQRCode(link string, imgSize int) ([]byte, error) {
 	}
 
 	s.logger.Debug("QR code not found in cache, generating new one")
-	rawPng, err := qrcode.Encode(link, qrcode.Medium, imgSize)
-	if err != nil {
-		return nil, err
-	}
 
-	err = s.cache.Set(cacheKey, rawPng, 100*time.Hour)
-	if err != nil {
-		s.logger.Error("Failed to save QR code to cache")
-		return nil, err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 
-	return rawPng, nil
+	qrChan := make(chan []byte, 1)
+	errChan := make(chan error, 1)
+	go func() {
+		rawPng, err := qrcode.Encode(link, qrcode.Medium, imgSize)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		qrChan <- rawPng
+	}()
+
+	select {
+	case rawPng := <-qrChan:
+		err = s.cache.Set(cacheKey, rawPng, 100*time.Hour)
+		if err != nil {
+			s.logger.Error("Failed to save QR code to cache")
+			return nil, err
+		}
+		return rawPng, nil
+	case err := <-errChan:
+		return nil, err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
