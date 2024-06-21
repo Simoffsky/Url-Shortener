@@ -15,9 +15,9 @@ flowchart TB;
 
     QRService<-->Redis;
     AuthService<-->AuthDB;
-
+    ClickTrackingService <--> StatsDB;
     
-    class Redis,ShortenerDB,AuthDB database;
+    class Redis,ShortenerDB,AuthDB,StatsDB database;
     
     classDef database fill:#f00,stroke:#333,stroke-width:4px;
 ```
