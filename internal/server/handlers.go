@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"url-shorter/internal/jwt"
 	"url-shorter/internal/models"
 )
@@ -58,17 +59,6 @@ func (s *LinkServer) handleRemoveLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := s.linkService.GetLink(short)
-	if err != nil {
-		s.handleError(w, err)
-		return
-	}
-
-	if link.CreatorLogin != creatorLogin {
-		s.handleError(w, models.ErrForbidden)
-		return
-	}
-
 	s.logger.Debug("Removing link: " + short)
 
 	if err := s.linkService.RemoveLink(creatorLogin, short); err != nil {
@@ -96,7 +86,6 @@ func (s *LinkServer) handleEditLink(w http.ResponseWriter, r *http.Request) {
 	link.CreatorLogin = creatorLogin
 	s.logger.Debug("Editing link: " + short)
 
-	//FIXME: userId is hardcoded to 0
 	if err := s.linkService.EditLink(creatorLogin, short, link); err != nil {
 		s.handleError(w, err)
 		return
@@ -120,7 +109,15 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 
 func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
 	var qrSize int
-	var err error
+
+	short := getLinkForQr(r.URL.Path)
+
+	_, err := s.linkService.GetLink(short)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
 	link := getFullUrl(r)
 	sizeQuery := r.URL.Query().Get("size")
 
@@ -206,6 +203,13 @@ func getFullUrl(r *http.Request) string {
 	return scheme + "://" + r.Host + r.RequestURI
 }
 
+func getLinkForQr(path string) string {
+	trimmedPath := strings.TrimPrefix(path, "/")
+	parts := strings.Split(trimmedPath, "/")
+	lastPart := parts[len(parts)-1]
+	cleanLastPart := strings.Split(lastPart, "?")[0]
+	return cleanLastPart
+}
 func removeTrailingSlash(short string) string {
 	if short == "" {
 		return short
