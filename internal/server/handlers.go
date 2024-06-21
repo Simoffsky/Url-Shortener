@@ -126,7 +126,7 @@ func (s *LinkServer) handleRedirect(w http.ResponseWriter, r *http.Request) {
 func (s *LinkServer) handleQRCode(w http.ResponseWriter, r *http.Request) {
 	var qrSize int
 
-	short := getLinkForQr(r.URL.Path)
+	short := getLink(r.URL.Path)
 
 	_, err := s.linkService.GetLink(short)
 	if err != nil {
@@ -194,6 +194,21 @@ func (s *LinkServer) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// post with
+func (s *LinkServer) handleStats(w http.ResponseWriter, r *http.Request) {
+	short := getLink(r.URL.Path)
+	stats, err := s.statService.GetStatForLink(short)
+	if err != nil {
+		s.handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		s.handleError(w, err)
+	}
+}
+
 func (s *LinkServer) handleError(w http.ResponseWriter, err error) {
 	fmt.Printf("%+v\n", err)
 	var modelErr models.Error
@@ -219,7 +234,7 @@ func getFullUrl(r *http.Request) string {
 	return scheme + "://" + r.Host + r.RequestURI
 }
 
-func getLinkForQr(path string) string {
+func getLink(path string) string {
 	trimmedPath := strings.TrimPrefix(path, "/")
 	parts := strings.Split(trimmedPath, "/")
 	lastPart := parts[len(parts)-1]

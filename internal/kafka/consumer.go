@@ -24,6 +24,7 @@ func NewConsumerManager(brokers []string, groupID string, topic string, logger l
 	if err != nil {
 		return nil, err
 	}
+
 	cm := &ConsumerManager{
 		consumer:   consumer,
 		statsChan:  make(chan models.LinkStatVisitor),

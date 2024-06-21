@@ -6,6 +6,20 @@ networks:
     driver: bridge
 
 services:
+
+  # shorter:
+  #   container_name: shorter
+  #   build:
+  #     context: .
+  #     dockerfile: docker/shorter/Dockerfile
+  #   restart: always
+  #   networks:
+  #     - main
+  #   ports:
+  #     - "${PORT}:${PORT}"
+  #   env_file:
+  #     - .env
+    
   redis:
     container_name: redis
     image: redis:6.2-alpine
@@ -35,6 +49,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
+    networks:
+      - main
   
   kafka:
     image: confluentinc/cp-kafka:7.4.4
@@ -49,7 +65,8 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
+    networks:
+      - main
 
   
     

@@ -69,7 +69,9 @@ func (s *StatsServer) Start() error {
 }
 
 func (s *StatsServer) configure() error {
+
 	statsRepo := stats.NewMemoryStatsRepository()
+
 	consumerManager, err := kafka.NewConsumerManager(s.config.KafkaBrokers, s.config.KafkaGroup, s.config.KafkaTopic, s.logger)
 	if err != nil {
 		return err
@@ -77,6 +79,7 @@ func (s *StatsServer) configure() error {
 
 	s.service = NewStatsServiceDefault(statsRepo)
 	s.kafkaReader = NewKafkaReader(s.service, consumerManager, s.logger)
+	s.kafkaReader.Start(context.Background())
 	s.logger.Debug("Connected to kafka: " + s.config.KafkaBrokers[0])
 	return nil
 }

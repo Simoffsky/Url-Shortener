@@ -1,20 +1,22 @@
 package stats
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 	"url-shorter/internal/models"
 )
 
-// MemoryStatsRepository реализация интерфейса StatsRepository, хранящая данные в памяти
 type MemoryStatsRepository struct {
-	mu    *sync.RWMutex
-	stats map[string]*models.LinkStat
+	mu       *sync.RWMutex
+	stats    map[string]*models.LinkStat
+	visitors map[string]map[models.LinkVisitor]struct{} // short link -> visitors
 }
 
 func NewMemoryStatsRepository() *MemoryStatsRepository {
 	return &MemoryStatsRepository{
-		stats: make(map[string]*models.LinkStat),
+		mu:       &sync.RWMutex{},
+		stats:    make(map[string]*models.LinkStat),
+		visitors: make(map[string]map[models.LinkVisitor]struct{}),
 	}
 }
 
@@ -25,13 +27,47 @@ func (r *MemoryStatsRepository) GetStatForLink(short string) (*models.LinkStat, 
 	if stat, exists := r.stats[short]; exists {
 		return stat, nil
 	}
-	return nil, errors.New("stat not found")
+	stat := &models.LinkStat{
+		ShortLink:      short,
+		Clicks:         0,
+		UniqueClicks:   0,
+		LastAccessedAt: 0,
+	}
+	r.stats[short] = stat
+	return stat, nil
 }
 
-func (r *MemoryStatsRepository) AddStat(stat models.LinkStat) error {
+func (r *MemoryStatsRepository) AddStat(linkVisitor models.LinkStatVisitor) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	fmt.Println("AddStat", linkVisitor)
+	_, exists := r.stats[linkVisitor.LinkShort]
+	if !exists {
+		stat := &models.LinkStat{
+			ShortLink:      linkVisitor.LinkShort,
+			Clicks:         0,
+			UniqueClicks:   0,
+			LastAccessedAt: 0,
+		}
+		r.stats[linkVisitor.LinkShort] = stat
+	}
 
-	r.stats[stat.ShortLink] = &stat
+	visitors, exists := r.visitors[linkVisitor.LinkShort]
+	if !exists {
+		visitors = make(map[models.LinkVisitor]struct{})
+		r.visitors[linkVisitor.LinkShort] = visitors
+	}
+
+	_, visitorExists := visitors[linkVisitor.Visitor]
+	if !visitorExists {
+		r.stats[linkVisitor.LinkShort].UniqueClicks++
+		visitors[linkVisitor.Visitor] = struct{}{}
+	}
+
+	fmt.Println("STATS:", r.stats)
+	fmt.Println("VISITORS:", r.visitors)
+	r.stats[linkVisitor.LinkShort].Clicks++
+	r.stats[linkVisitor.LinkShort].LastAccessedAt = linkVisitor.TimeAt
+
 	return nil
 }

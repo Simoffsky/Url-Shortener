@@ -25,5 +25,5 @@ func (s *StatsServiceDefault) GetStatForLink(short string) (*models.LinkStat, er
 }
 
 func (s *StatsServiceDefault) SendStat(stat *models.LinkStatVisitor) error {
-	panic("implement me (SendStat)")
+	return s.statsRepo.AddStat(*stat)
 }
