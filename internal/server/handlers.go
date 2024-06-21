@@ -210,7 +210,6 @@ func (s *LinkServer) handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *LinkServer) handleError(w http.ResponseWriter, err error) {
-	fmt.Printf("%+v\n", err)
 	var modelErr models.Error
 	if !errors.As(err, &modelErr) {
 		s.writeError(w, http.StatusInternalServerError, err)
