@@ -30,7 +30,11 @@ func NewLinkServer(config config.Config) *LinkServer {
 func (s *LinkServer) configureServer() error {
 	var err error
 
-	linksRepo := repository.NewMemoryLinksRepository()
+	pgConn, err := repository.ConnectToDB(s.config.DbConn)
+	if err != nil {
+		return err
+	}
+	linksRepo := repository.NewPgLinksRepository(pgConn)
 	qrRepo, err := repository.NewQrGRPCRepository(s.config.QrAddr)
 	if err != nil {
 		return err
