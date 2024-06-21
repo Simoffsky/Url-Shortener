@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"fmt"
 	"sync"
 	"url-shorter/internal/models"
 )
@@ -40,7 +39,7 @@ func (r *MemoryStatsRepository) GetStatForLink(short string) (*models.LinkStat, 
 func (r *MemoryStatsRepository) AddStat(linkVisitor models.LinkStatVisitor) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	fmt.Println("AddStat", linkVisitor)
+
 	_, exists := r.stats[linkVisitor.LinkShort]
 	if !exists {
 		stat := &models.LinkStat{
@@ -64,8 +63,6 @@ func (r *MemoryStatsRepository) AddStat(linkVisitor models.LinkStatVisitor) erro
 		visitors[linkVisitor.Visitor] = struct{}{}
 	}
 
-	fmt.Println("STATS:", r.stats)
-	fmt.Println("VISITORS:", r.visitors)
 	r.stats[linkVisitor.LinkShort].Clicks++
 	r.stats[linkVisitor.LinkShort].LastAccessedAt = linkVisitor.TimeAt
 

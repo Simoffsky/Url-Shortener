@@ -85,6 +85,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: url_shorter
+    volumes:
+      - ./database:/var/lib/postgresql/data
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.4

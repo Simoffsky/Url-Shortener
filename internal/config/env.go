@@ -19,7 +19,7 @@ func NewEnvConfig() Config {
 		LoggerLevel: getEnv("LOGGER_LEVEL", "DEBUG"),
 		QrAddr:      getEnv("QR_ADDR", "localhost:50051"),
 		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
-		AuthAddr:    getEnv("AUTH_ADDR", "localhost:50052"),
+		AuthAddr:    getEnv("AUTH_GRPC_ADDR", "localhost:50052"),
 		JwtSecret:   getEnv("JWT_SECRET", "secret"),
 		DbConn:      getEnv("DB_CONN", "host=localhost port=5432 user=postgres password=postgres dbname=url_shorter sslmode=disable"),
 

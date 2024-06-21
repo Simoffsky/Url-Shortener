@@ -25,7 +25,7 @@ func (r *MemoryLinksRepository) CreateLink(link models.Link) error {
 		return fmt.Errorf("%w: %s", models.ErrLinkAlreadyExists, link.ShortUrl)
 	}
 	r.links[link.ShortUrl] = link
-	fmt.Println(r.links)
+
 	return nil
 }
 

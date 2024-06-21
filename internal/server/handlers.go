@@ -230,6 +230,7 @@ func getFullUrl(r *http.Request) string {
 	} else {
 		scheme = "https"
 	}
+	
 	return scheme + "://" + r.Host + r.RequestURI
 }
 
